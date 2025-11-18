@@ -19,10 +19,11 @@ type CheckoutPayload = {
   currency?: string;
   successUrl: string;
   cancelUrl: string;
+  metadata?: Record<string, string | number>;
 };
 
 /** Creates a Checkout Session for booking payments. */
-export async function createCheckoutSession({ amount, currency = 'thb', successUrl, cancelUrl }: CheckoutPayload) {
+export async function createCheckoutSession({ amount, currency = 'thb', successUrl, cancelUrl, metadata }: CheckoutPayload) {
   const stripe = getStripeClient();
   return stripe.checkout.sessions.create({
     mode: 'payment',
@@ -40,6 +41,7 @@ export async function createCheckoutSession({ amount, currency = 'thb', successU
           }
         }
       }
-    ]
+    ],
+    metadata
   });
 }
