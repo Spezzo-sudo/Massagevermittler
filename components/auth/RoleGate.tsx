@@ -21,14 +21,14 @@ export function RoleGate({ allowed, fallback = '/customer/login', children }: Ro
     supabase.auth.getSession().then(async ({ data }) => {
       const token = data.session?.access_token;
       if (!token) {
-        router.replace(fallback);
+        router.replace(fallback as any);
         return;
       }
       const profile = await fetch('/api/auth/role', { headers: { Authorization: `Bearer ${token}` } })
         .then((res) => res.json())
         .catch(() => ({ role: null }));
       if (!profile?.role || !allowed.includes(profile.role)) {
-        router.replace(fallback);
+        router.replace(fallback as any);
         return;
       }
       setCanView(true);

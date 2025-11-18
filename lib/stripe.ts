@@ -9,7 +9,7 @@ export function getStripeClient() {
     throw new Error('STRIPE_SECRET_KEY fehlt.');
   }
   if (!stripeClient) {
-    stripeClient = new Stripe(stripeSecret, { apiVersion: '2023-10-16' });
+    stripeClient = new Stripe(stripeSecret, { apiVersion: '2024-04-10' });
   }
   return stripeClient;
 }

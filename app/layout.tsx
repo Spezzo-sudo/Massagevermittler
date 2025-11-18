@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import Script from 'next/script';
 
 import './globals.css';
@@ -7,8 +6,6 @@ import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
 import { ProfileBootstrapper } from '@/components/auth/ProfileBootstrapper';
 import { siteConfig } from '@/config/site';
-
-const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: siteConfig.name,
@@ -37,7 +34,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           strategy="beforeInteractive"
         />
       </head>
-      <body className={inter.className}>
+      <body className="font-sans">
         <ProfileBootstrapper />
         <Header />
         <main className="min-h-screen bg-white">{children}</main>

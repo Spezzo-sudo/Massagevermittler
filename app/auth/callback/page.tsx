@@ -27,7 +27,7 @@ export default function AuthCallbackPage() {
           return;
         }
         setMessage('Erfolgreich angemeldet. Weiterleitung ...');
-        router.replace(next);
+        router.replace(next as any);
       })
       .catch((error) => setMessage(error.message));
   }, [code, next, router, supabase]);

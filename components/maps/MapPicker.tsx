@@ -72,7 +72,7 @@ export function MapPicker({ location, onChange }: MapPickerProps) {
         });
       };
 
-      mapInstance.current.addListener('click', (event: google.maps.MapMouseEvent) => {
+      mapInstance.current!.addListener('click', (event: google.maps.MapMouseEvent) => {
         const lat = event.latLng?.lat();
         const lng = event.latLng?.lng();
         if (lat !== undefined && lng !== undefined) {
@@ -80,7 +80,7 @@ export function MapPicker({ location, onChange }: MapPickerProps) {
         }
       });
 
-      markerRef.current.addListener('dragend', () => {
+      markerRef.current!.addListener('dragend', () => {
         const pos = markerRef.current?.getPosition();
         if (!pos) return;
         handlePosition(pos.lat(), pos.lng());
