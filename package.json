@@ -13,6 +13,7 @@
     "test:coverage": "vitest --coverage"
   },
   "dependencies": {
+    "@sendgrid/mail": "^8.1.6",
     "@stripe/stripe-js": "^3.5.0",
     "@supabase/supabase-js": "^2.45.3",
     "@tanstack/react-query": "^5.62.8",
@@ -22,6 +23,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "stripe": "^15.12.0",
+    "twilio": "^5.10.5",
     "zod": "^3.23.8",
     "zustand": "^4.5.5"
   },
