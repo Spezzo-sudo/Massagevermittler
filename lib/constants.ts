@@ -5,8 +5,8 @@ export type BoundingBox = {
 
 /** Bounding box restricting addresses to Ko Phangan. */
 export const KO_PHANGAN_BOUNDS: BoundingBox = {
-  northEast: { lat: 9.82, lng: 100.06 },
-  southWest: { lat: 9.65, lng: 99.93 }
+  northEast: { lat: 8.15, lng: 100.45 },
+  southWest: { lat: 8.0, lng: 100.35 }
 };
 
 /** Roles used throughout Supabase profiles + UI routing. */
