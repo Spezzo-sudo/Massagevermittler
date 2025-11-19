@@ -2,6 +2,8 @@ import { ProductGrid } from '@/components/shop/ProductGrid';
 import { SectionHeading } from '@/components/common/SectionHeading';
 import type { Product } from '@/lib/types/shop';
 
+export const dynamic = 'force-dynamic';
+
 const demoProducts: Product[] = [
   { id: 1, name: 'Kokos-Aroma Öl', description: 'Lokales Öl mit Lemongras-Note, perfekt für Aromenmassagen.', price: 690, currency: 'THB', category: 'oil', inventory: 50, created_at: new Date().toISOString() },
   { id: 2, name: 'Muskel-Relax Balm', description: 'Sportbalsam mit Menthol & Tamarind für Sportmassagen.', price: 790, currency: 'THB', category: 'oil', inventory: 30, created_at: new Date().toISOString() },

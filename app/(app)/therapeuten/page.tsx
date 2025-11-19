@@ -2,6 +2,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { PublicTherapistProfile } from '@/lib/types/therapist';
 
+export const dynamic = 'force-dynamic';
+
 async function getTherapists(): Promise<PublicTherapistProfile[]> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
   try {

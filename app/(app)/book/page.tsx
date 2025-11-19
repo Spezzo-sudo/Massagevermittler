@@ -1,6 +1,8 @@
 import { BookingWizard } from '@/components/booking/BookingWizard';
 import { SectionHeading } from '@/components/common/SectionHeading';
 
+export const dynamic = 'force-dynamic';
+
 /** Pizza-style booking flow entry point. */
 export default function BookPage() {
   return (
