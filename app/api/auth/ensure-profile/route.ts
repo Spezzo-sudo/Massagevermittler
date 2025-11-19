@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: insertError.message }, { status: 400 });
     }
 
-    return NextResponse.json({ status: 'created', role: 'customer' });
+    return NextResponse.json({ status: 'created', role: requestedRole ?? 'customer' });
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
