@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
 import { createSupabaseBrowserClient } from '@/lib/supabase/browserClient';
@@ -8,10 +9,13 @@ type AuthCardProps = {
   mode: 'sign-in' | 'sign-up';
   targetRole?: 'customer' | 'therapist' | 'admin';
   redirectTo?: string;
+  onModeChange?: (newMode: 'sign-in' | 'sign-up') => void;
+  signUpLink?: string;
+  signInLink?: string;
 };
 
 /** Email + Passwort Auth powered by Supabase. */
-export function AuthCard({ mode, targetRole, redirectTo }: AuthCardProps) {
+export function AuthCard({ mode, targetRole, redirectTo, onModeChange, signUpLink, signInLink }: AuthCardProps) {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -103,6 +107,45 @@ export function AuthCard({ mode, targetRole, redirectTo }: AuthCardProps) {
         {isLoading ? 'Bitte warten...' : mode === 'sign-in' ? 'Einloggen' : 'Registrieren'}
       </button>
       {message ? <p className="text-sm text-slate-500">{message}</p> : null}
+      <div className="border-t border-slate-200 pt-4">
+        <p className="text-center text-sm text-slate-600">
+          {mode === 'sign-in' ? (
+            <>
+              Noch kein Account?{' '}
+              {signUpLink ? (
+                <Link href={signUpLink} className="font-semibold text-brand-600 hover:underline">
+                  Jetzt registrieren
+                </Link>
+              ) : onModeChange ? (
+                <button
+                  type="button"
+                  onClick={() => onModeChange('sign-up')}
+                  className="font-semibold text-brand-600 hover:underline"
+                >
+                  Jetzt registrieren
+                </button>
+              ) : null}
+            </>
+          ) : (
+            <>
+              Bereits registriert?{' '}
+              {signInLink ? (
+                <Link href={signInLink} className="font-semibold text-brand-600 hover:underline">
+                  Einloggen
+                </Link>
+              ) : onModeChange ? (
+                <button
+                  type="button"
+                  onClick={() => onModeChange('sign-in')}
+                  className="font-semibold text-brand-600 hover:underline"
+                >
+                  Einloggen
+                </button>
+              ) : null}
+            </>
+          )}
+        </p>
+      </div>
     </form>
   );
 }

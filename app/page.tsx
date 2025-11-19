@@ -28,10 +28,10 @@ export default function HomePage() {
               Buche verifizierte Therapeut:innen wie eine Fahrt: GPS + Service wählen – Supabase kümmert sich um Matching, Payments und Statusupdates.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
-              <Link href="/customer/login" className="rounded-full bg-brand-500 px-6 py-3 text-sm font-semibold text-white shadow-lg">
+              <Link href="/customer/register" className="rounded-full bg-brand-500 px-6 py-3 text-sm font-semibold text-white shadow-lg">
                 Jetzt Massage buchen
               </Link>
-              <Link href="/therapist/login" className="rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow">
+              <Link href="/therapist/register" className="rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow">
                 Ich möchte massieren
               </Link>
             </div>
