@@ -39,9 +39,16 @@ export function Header() {
   }, [supabase]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    await fetch('/api/auth/signout', { method: 'POST' }).catch(() => null);
-    window.location.href = '/';
+    try {
+      await Promise.all([
+        supabase.auth.signOut(),
+        fetch('/api/auth/signout', { method: 'POST' })
+      ]);
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      window.location.href = '/';
+    }
   };
 
   // Übersetzter Rollenname für die Anzeige
@@ -69,10 +76,10 @@ export function Header() {
           ))}
           {/* Dashboard Links basierend auf Rolle einblenden */}
           {userState.role === 'customer' && (
-            <Link href="/customer/dashboard" className="hover:text-brand-600 transition-colors">Mein Bereich</Link>
+            <Link href="/(dashboard)/customer" className="hover:text-brand-600 transition-colors">Mein Bereich</Link>
           )}
           {userState.role === 'therapist' && (
-            <Link href="/therapist/dashboard" className="hover:text-brand-600 transition-colors">Cockpit</Link>
+            <Link href="/(dashboard)/therapist" className="hover:text-brand-600 transition-colors">Cockpit</Link>
           )}
         </nav>
 

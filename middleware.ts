@@ -3,8 +3,8 @@ import type { NextRequest } from 'next/server';
 
 // Konfiguration der geschützten Bereiche
 const protectedPaths = {
-  customer: '/customer/dashboard',
-  therapist: '/therapist/dashboard',
+  customer: '/(dashboard)/customer',
+  therapist: '/(dashboard)/therapist',
   admin: '/admin',
 };
 

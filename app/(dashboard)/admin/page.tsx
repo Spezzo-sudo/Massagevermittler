@@ -16,14 +16,19 @@ export default function AdminDashboardPage() {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [therapists, setTherapists] = useState<TherapistRow[]>([]);
   const [message, setMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
-      const token = data.session?.access_token;
-      if (!token) return;
-      const res = await fetch('/api/admin/therapists', { headers: { Authorization: `Bearer ${token}` } });
-      const json = await res.json();
-      if (json?.therapists) setTherapists(json.therapists);
+      try {
+        const token = data.session?.access_token;
+        if (!token) return;
+        const res = await fetch('/api/admin/therapists', { headers: { Authorization: `Bearer ${token}` } });
+        const json = await res.json();
+        if (json?.therapists) setTherapists(json.therapists);
+      } finally {
+        setLoading(false);
+      }
     });
   }, [supabase]);
 
@@ -52,7 +57,9 @@ export default function AdminDashboardPage() {
           <h1 className="text-3xl font-semibold text-slate-900">Therapeut:innen prüfen</h1>
         </div>
         <div className="space-y-3 rounded-3xl border border-slate-200 bg-white p-6 shadow">
-          {therapists.length === 0 ? (
+          {loading ? (
+            <p className="text-sm text-slate-500">Lade Bewerbungen...</p>
+          ) : therapists.length === 0 ? (
             <p className="text-sm text-slate-500">Keine Bewerbungen.</p>
           ) : (
             therapists.map((t) => (

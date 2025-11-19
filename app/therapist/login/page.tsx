@@ -3,7 +3,7 @@ import { AuthCard } from '@/components/forms/AuthCard';
 export default function TherapistLoginPage() {
   return (
     <div className="mx-auto flex max-w-md flex-col gap-4 px-6 py-16">
-      <AuthCard mode="sign-in" targetRole="therapist" redirectTo="/therapist" signUpLink="/therapist/register" />
+      <AuthCard mode="sign-in" targetRole="therapist" redirectTo="/(dashboard)/therapist" signUpLink="/therapist/register" />
     </div>
   );
 }
