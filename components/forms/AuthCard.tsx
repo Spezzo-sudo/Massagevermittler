@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-
+import { useRouter } from 'next/navigation';
 import { createSupabaseBrowserClient } from '@/lib/supabase/browserClient';
 
 type AuthCardProps = {
@@ -14,9 +14,9 @@ type AuthCardProps = {
   signInLink?: string;
 };
 
-/** Email + Passwort Auth powered by Supabase. */
 export function AuthCard({ mode, targetRole, redirectTo, onModeChange, signUpLink, signInLink }: AuthCardProps) {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState<string | null>(null);
@@ -25,125 +25,129 @@ export function AuthCard({ mode, targetRole, redirectTo, onModeChange, signUpLin
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
-    setMessage(mode === 'sign-up' ? 'Account wird erstellt ...' : 'Anmeldung läuft ...');
+    setMessage(null);
 
     try {
-      if (mode === 'sign-up') {
-        const { error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error;
-        setMessage('Account erstellt. Du bist jetzt eingeloggt.');
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        setMessage('Erfolgreich angemeldet.');
+      // 1. Supabase Auth Anfrage
+      const { data: authData, error } = mode === 'sign-up'
+        ? await supabase.auth.signUp({ email, password })
+        : await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) throw error;
+
+      if (!authData.session) {
+        setMessage('Bitte bestätige deine E-Mail-Adresse.');
+        setIsLoading(false);
+        return;
       }
+
+      const token = authData.session.access_token;
+
+      // 2. Profil in DB sicherstellen (Wichtig für neue User)
+      if (mode === 'sign-up') {
+        setMessage('Erstelle Profil...');
+        await fetch('/api/auth/ensure-profile', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ role: targetRole })
+        });
+      }
+
+      // 3. WICHTIG: Rolle abfragen, damit das Cookie gesetzt wird!
+      // Ohne diesen Schritt blockiert die Middleware den Zugriff.
+      setMessage('Anmeldung wird abgeschlossen...');
+      await fetch('/api/auth/role', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // 4. Erfolgreich -> Weiterleitung
+      setMessage('Erfolgreich! Du wirst weitergeleitet...');
+
+      if (redirectTo) {
+        router.push(redirectTo);
+        router.refresh(); // Wichtig: Lädt Server-Komponenten neu (Header Status etc.)
+      } else {
+        // Fallback
+        router.push('/');
+      }
+
     } catch (error) {
       const errorMessage = (error as Error).message;
-      // Improve error messages for common cases
-      if (errorMessage.includes('User already registered')) {
-        setMessage(
-          mode === 'sign-up'
-            ? 'Diese E-Mail ist bereits registriert. Bitte logge dich ein oder verwende eine andere E-Mail.'
-            : 'Falsche Anmeldedaten.'
-        );
-      } else if (errorMessage.includes('Invalid login credentials')) {
-        setMessage('E-Mail oder Passwort falsch. Bitte überprüfe deine Eingaben.');
-      } else if (errorMessage.includes('Email not confirmed')) {
-        setMessage('Bitte bestätige zuerst deine E-Mail-Adresse.');
+      if (errorMessage.includes('Invalid login credentials')) {
+        setMessage('E-Mail oder Passwort falsch.');
+      } else if (errorMessage.includes('User already registered')) {
+        setMessage('Diese E-Mail ist bereits registriert.');
       } else {
-        setMessage(errorMessage);
+        setMessage(errorMessage); // Fallback für andere Fehler
       }
-    } finally {
       setIsLoading(false);
-    }
-
-    // ensure profile + role
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token;
-    if (token) {
-      await fetch('/api/auth/ensure-profile', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ role: targetRole })
-      }).catch(() => null);
-    }
-
-    if (redirectTo) {
-      setTimeout(() => {
-        window.location.href = redirectTo;
-      }, 300);
     }
   };
 
   return (
     <form className="space-y-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-lg" onSubmit={handleSubmit}>
       <h1 className="text-2xl font-semibold text-slate-900">
-        {mode === 'sign-in' ? 'Willkommen zurück' : 'Account erstellen'}
+        {mode === 'sign-in' ? 'Willkommen zurück' : 'Konto erstellen'}
       </h1>
-      <p className="text-sm text-slate-600">
-        Wir nutzen Supabase Auth mit E-Mail und Passwort. Du kannst später zusätzlich Social Login ergänzen.
-      </p>
-      <label className="block space-y-2 text-sm">
-        <span className="font-semibold text-slate-700">E-Mail</span>
+
+      <div className="space-y-1">
+        <label className="block text-sm font-semibold text-slate-700">E-Mail</label>
         <input
           type="email"
-          className="w-full rounded-xl border border-slate-200 px-4 py-3"
+          autoComplete="username"
+          className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
         />
-      </label>
-      <label className="block space-y-2 text-sm">
-        <span className="font-semibold text-slate-700">Passwort</span>
+      </div>
+
+      <div className="space-y-1">
+        <label className="block text-sm font-semibold text-slate-700">Passwort</label>
         <input
           type="password"
-          className="w-full rounded-xl border border-slate-200 px-4 py-3"
+          autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'}
+          className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           required
+          minLength={6}
         />
-      </label>
-      <button className="w-full rounded-full bg-brand-500 py-3 font-semibold text-white disabled:opacity-60" disabled={isLoading}>
-        {isLoading ? 'Bitte warten...' : mode === 'sign-in' ? 'Einloggen' : 'Registrieren'}
+      </div>
+
+      <button
+        className="w-full rounded-full bg-brand-500 py-3 font-semibold text-white shadow-md hover:bg-brand-600 hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed transition-all"
+        disabled={isLoading}
+      >
+        {isLoading ? 'Einen Moment...' : mode === 'sign-in' ? 'Anmelden' : 'Registrieren'}
       </button>
-      {message ? <p className="text-sm text-slate-500">{message}</p> : null}
-      <div className="border-t border-slate-200 pt-4">
-        <p className="text-center text-sm text-slate-600">
-          {mode === 'sign-in' ? (
-            <>
-              Noch kein Account?{' '}
-              {signUpLink ? (
-                <Link href={signUpLink} className="font-semibold text-brand-600 hover:underline">
-                  Jetzt registrieren
-                </Link>
-              ) : onModeChange ? (
-                <button
-                  type="button"
-                  onClick={() => onModeChange('sign-up')}
-                  className="font-semibold text-brand-600 hover:underline"
-                >
-                  Jetzt registrieren
-                </button>
-              ) : null}
-            </>
-          ) : (
-            <>
-              Bereits registriert?{' '}
-              {signInLink ? (
-                <Link href={signInLink} className="font-semibold text-brand-600 hover:underline">
-                  Einloggen
-                </Link>
-              ) : onModeChange ? (
-                <button
-                  type="button"
-                  onClick={() => onModeChange('sign-in')}
-                  className="font-semibold text-brand-600 hover:underline"
-                >
-                  Einloggen
-                </button>
-              ) : null}
-            </>
-          )}
+
+      {message && (
+        <div className={`text-sm p-3 rounded-lg text-center ${message.includes('Erfolgreich') ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-600'}`}>
+          {message}
+        </div>
+      )}
+
+      <div className="border-t border-slate-100 pt-4 mt-2">
+        <p className="text-center text-sm text-slate-500">
+          {mode === 'sign-in' ? 'Noch kein Konto? ' : 'Bereits registriert? '}
+          {signUpLink ? (
+            <Link href={signUpLink} className="font-semibold text-brand-600 hover:text-brand-700 hover:underline">
+              Jetzt registrieren
+            </Link>
+          ) : signInLink ? (
+            <Link href={signInLink} className="font-semibold text-brand-600 hover:text-brand-700 hover:underline">
+              Anmelden
+            </Link>
+          ) : onModeChange ? (
+            <button
+              type="button"
+              onClick={() => onModeChange(mode === 'sign-in' ? 'sign-up' : 'sign-in')}
+              className="font-semibold text-brand-600 hover:text-brand-700 hover:underline"
+            >
+              {mode === 'sign-in' ? 'Jetzt registrieren' : 'Anmelden'}
+            </button>
+          ) : null}
         </p>
       </div>
     </form>

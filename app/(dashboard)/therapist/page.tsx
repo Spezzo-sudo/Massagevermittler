@@ -28,14 +28,19 @@ export default function TherapistDashboardPage() {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [message, setMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
-      const token = data.session?.access_token;
-      if (!token) return;
-      const res = await fetch('/api/therapist/bookings', { headers: { Authorization: `Bearer ${token}` } });
-      const json = await res.json();
-      if (json?.bookings) setBookings(json.bookings);
+      try {
+        const token = data.session?.access_token;
+        if (!token) return;
+        const res = await fetch('/api/therapist/bookings', { headers: { Authorization: `Bearer ${token}` } });
+        const json = await res.json();
+        if (json?.bookings) setBookings(json.bookings);
+      } finally {
+        setLoading(false);
+      }
     });
   }, [supabase]);
 
@@ -83,7 +88,9 @@ export default function TherapistDashboardPage() {
             <h2 className="text-xl font-semibold text-slate-900">Anfragen & Buchungen</h2>
             <span className="text-xs uppercase text-slate-400">Realtime (Demo)</span>
           </div>
-          {bookings.length === 0 ? (
+          {loading ? (
+            <p className="text-sm text-slate-500">Lade Anfragen...</p>
+          ) : bookings.length === 0 ? (
             <p className="text-sm text-slate-500">Keine Anfragen.</p>
           ) : (
             bookings.map((booking) => {

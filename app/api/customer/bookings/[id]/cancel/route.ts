@@ -35,7 +35,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
     const start = new Date(booking.start_time).getTime();
     const diff = start - Date.now();
     const late = diff < THREE_HOURS_MS;
-    const newStatus = late ? 'cancelled' : 'cancelled';
+    const newStatus = late ? 'cancelled' : 'refunded';
 
     const { error: updateError } = await supabase
       .from('bookings')
