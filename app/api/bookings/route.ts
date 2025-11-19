@@ -38,12 +38,17 @@ export async function POST(request: Request) {
         .eq('id', payload.serviceId)
         .single();
       const price = serviceRow?.base_price ?? fallbackPrice;
+      const durationMinutes = serviceRow?.duration_minutes ?? 60; // Default 60 Min
 
       therapistId = await findTherapistForBooking(
         supabase,
         { lat: payload.location.latitude, lng: payload.location.longitude },
         payload.serviceId
       );
+
+      // Calculate end_time from start_time + duration
+      const startTime = new Date(payload.scheduledAt);
+      const endTime = new Date(startTime.getTime() + durationMinutes * 60 * 1000);
 
       const formattedAddress = payload.location.formattedAddress ?? payload.location.label ?? 'Ko Phangan';
       const placeId =
@@ -74,8 +79,8 @@ export async function POST(request: Request) {
           service_id: payload.serviceId,
           therapist_id: therapistId,
           address_id: addressRow?.id ?? null,
-          start_time: payload.scheduledAt,
-          end_time: payload.scheduledAt,
+          start_time: startTime.toISOString(),
+          end_time: endTime.toISOString(),
           price,
           notes: payload.notes ?? null,
           status: 'pending',

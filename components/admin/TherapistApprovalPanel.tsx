@@ -1,10 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { Database } from '@supabase/supabase-js';
 
-type Therapist = Database['public']['Tables']['therapist_profiles']['Row'] & {
-  profile: any;
+type Therapist = {
+  id: string;
+  onboarding_status: string;
+  bio?: string;
+  travel_radius_km?: number;
+  avg_rating?: number;
+  languages_spoken?: string[];
+  profile?: {
+    full_name?: string;
+    email?: string;
+  };
 };
 
 /**
@@ -88,7 +96,7 @@ export function TherapistApprovalPanel() {
             onClick={() => setFilter(f)}
             className={`px-4 py-2 rounded-full text-sm font-medium transition ${
               filter === f
-                ? 'bg-emerald-500 text-white'
+                ? 'bg-brand-500 text-white'
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
@@ -125,7 +133,7 @@ export function TherapistApprovalPanel() {
                     <>
                       <button
                         onClick={() => approveTherapist(therapist.id)}
-                        className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600"
+                        className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
                       >
                         ✓ Freischalten
                       </button>
@@ -138,7 +146,7 @@ export function TherapistApprovalPanel() {
                     </>
                   )}
                   {therapist.onboarding_status === 'approved' && (
-                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
+                    <span className="rounded-full bg-brand-100 px-3 py-1 text-xs font-medium text-brand-700">
                       Freigeschaltet
                     </span>
                   )}

@@ -67,7 +67,7 @@ export function TherapistAvailability() {
                 <span>
                   {new Date(slot.start_time).toLocaleString()} – {new Date(slot.end_time).toLocaleTimeString()}
                 </span>
-                <span className={`text-xs font-semibold ${slot.is_booked ? 'text-rose-500' : 'text-emerald-500'}`}>
+                <span className={`text-xs font-semibold ${slot.is_booked ? 'text-rose-500' : 'text-brand-500'}`}>
                   {slot.is_booked ? 'Gebucht' : 'Verfügbar'}
                 </span>
               </li>

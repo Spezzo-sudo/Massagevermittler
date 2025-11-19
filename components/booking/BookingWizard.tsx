@@ -10,6 +10,7 @@ import { Field } from '../forms/Field';
 import { AddressAutocomplete, type AddressResult } from '../maps/AddressAutocomplete';
 import { MapPinPreview } from '../maps/MapPinPreview';
 import { MapPicker } from '../maps/MapPicker';
+import { DateTimePicker } from '../calendar/DateTimePicker';
 
 const toNumber = (value: string) => {
   const parsed = Number(value);
@@ -21,8 +22,8 @@ export function BookingWizard() {
   const [manualLabel, setManualLabel] = useState('');
   const [addressNotes, setAddressNotes] = useState('');
   const [serviceId, setServiceId] = useState(massageServices[0].id);
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState<string | null>(null);
   const [geoStatus, setGeoStatus] = useState<string | null>(null);
@@ -76,6 +77,11 @@ export function BookingWizard() {
     );
   };
 
+  const handleDateTimeSelect = (date: Date, time: string) => {
+    setSelectedDate(date);
+    setSelectedTime(time);
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -84,10 +90,13 @@ export function BookingWizard() {
       return;
     }
 
-    if (!date || !time) {
+    if (!selectedDate || !selectedTime) {
       setStatus('Bitte Datum und Uhrzeit wählen.');
       return;
     }
+
+    // Format date to YYYY-MM-DD
+    const dateStr = selectedDate.toISOString().split('T')[0];
 
     const payload: BookingPayload = {
       location: {
@@ -97,7 +106,7 @@ export function BookingWizard() {
         googlePlaceId: effectiveLocation.googlePlaceId
       },
       serviceId,
-      scheduledAt: `${date}T${time}:00`,
+      scheduledAt: `${dateStr}T${selectedTime}:00`,
       notes: [addressNotes, notes].filter(Boolean).join('\n')
     };
 
@@ -118,13 +127,13 @@ export function BookingWizard() {
           <button
             type="button"
             onClick={requestCurrentLocation}
-            className="rounded-full border border-emerald-200 bg-white px-4 py-2 text-xs font-semibold text-emerald-600 shadow"
+            className="rounded-full border border-brand-200 bg-white px-4 py-2 text-xs font-semibold text-brand-600 shadow"
           >
             Standort automatisch erkennen
           </button>
         </div>
         <AddressAutocomplete onAddressSelect={handlePlaceSelect} placeholder="Hotel / Villa / Bungalow suchen" />
-        {geoStatus ? <p className="text-xs text-emerald-600">{geoStatus}</p> : null}
+        {geoStatus ? <p className="text-xs text-brand-600">{geoStatus}</p> : null}
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Hotel / Unterkunft">
             <input
@@ -149,61 +158,53 @@ export function BookingWizard() {
         <MapPinPreview latitude={effectiveLocation?.latitude} longitude={effectiveLocation?.longitude} label={manualLabel} />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Field label="Massage-Art">
-          <select
-            className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm"
-            value={serviceId}
-            onChange={(event) => setServiceId(Number(event.target.value))}
-          >
-            {massageServices.map((service) => (
-              <option key={service.id} value={service.id}>
-                {service.name} · {service.durationMinutes} min
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Datum">
-          <input
-            type="date"
-            className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm"
-            value={date}
-            onChange={(event) => setDate(event.target.value)}
-          />
-        </Field>
+      <Field label="Massage-Art">
+        <select
+          className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm"
+          value={serviceId}
+          onChange={(event) => setServiceId(Number(event.target.value))}
+        >
+          {massageServices.map((service) => (
+            <option key={service.id} value={service.id}>
+              {service.name} · {service.durationMinutes} min
+            </option>
+          ))}
+        </select>
+      </Field>
+
+      {/* Visual Calendar with Time Slots */}
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold text-slate-900">📅 Termin wählen</h3>
+        <DateTimePicker
+          selectedDate={selectedDate}
+          selectedTime={selectedTime}
+          onDateTimeSelect={handleDateTimeSelect}
+          minDate={new Date()}
+        />
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <Field label="Zeit">
-          <input
-            type="time"
-            className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm"
-            value={time}
-            onChange={(event) => setTime(event.target.value)}
-          />
-        </Field>
-        <Field label="Weitere Hinweise (optional)">
-          <input
-            type="text"
-            className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm"
-            value={notes}
-            onChange={(event) => setNotes(event.target.value)}
-            placeholder="Sprache, Allergien, gewünschtes Öl..."
-          />
-        </Field>
-      </div>
+
+      <Field label="Weitere Hinweise (optional)">
+        <input
+          type="text"
+          className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm"
+          value={notes}
+          onChange={(event) => setNotes(event.target.value)}
+          placeholder="Sprache, Allergien, gewünschtes Öl..."
+        />
+      </Field>
 
       <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-600">
         <p className="font-semibold text-slate-900">Preis Vorschau</p>
         <p>
           {selectedService?.name} ({selectedService?.durationMinutes} min):{' '}
-          <span className="font-semibold text-emerald-600">{selectedService?.price} THB</span>
+          <span className="font-semibold text-brand-600">{selectedService?.price} THB</span>
         </p>
         <p>Preise basieren auf Supabase `services.base_price` – Zuschläge werden automatisch addiert.</p>
       </div>
 
       <button
         type="submit"
-        className="w-full rounded-full bg-emerald-500 py-3 font-semibold text-white shadow-lg disabled:opacity-60"
+        className="w-full rounded-full bg-brand-500 py-3 font-semibold text-white shadow-lg disabled:opacity-60"
         disabled={isPending || !(effectiveLocation?.latitude && effectiveLocation?.longitude)}
       >
         {isPending ? 'Buchung wird erstellt...' : 'Massage buchen'}
