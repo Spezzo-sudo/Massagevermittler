@@ -96,6 +96,34 @@ create table if not exists public.availability_slots (
   created_at timestamptz default now()
 );
 
+-- Recurring Availability Patterns
+create table if not exists public.availability_patterns (
+  id uuid primary key default gen_random_uuid(),
+  therapist_id uuid references public.profiles(id) on delete cascade,
+  day_of_week int not null check (day_of_week between 0 and 6), -- 0 = Sunday, 6 = Saturday
+  start_time time not null,
+  end_time time not null,
+  is_active boolean default true,
+  valid_from date,
+  valid_until date,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table public.availability_patterns enable row level security;
+
+create policy availability_pattern_select on public.availability_patterns
+for select using (auth.uid() = therapist_id);
+
+create policy availability_pattern_insert on public.availability_patterns
+for insert with check (auth.uid() = therapist_id);
+
+create policy availability_pattern_update on public.availability_patterns
+for update using (auth.uid() = therapist_id);
+
+create policy availability_pattern_delete on public.availability_patterns
+for delete using (auth.uid() = therapist_id);
+
 -- Bookings
 do $$
 begin

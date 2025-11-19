@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { RoleGate } from '@/components/auth/RoleGate';
-import { TherapistAvailability } from '@/components/therapist/TherapistAvailability';
+import { AvailabilityCalendar } from '@/components/therapist/AvailabilityCalendar';
+import { RecurringPatterns } from '@/components/therapist/RecurringPatterns';
 import { TherapistProfileForm } from '@/components/therapist/TherapistProfileForm';
 import { TherapistServiceSelector } from '@/components/therapist/TherapistServiceSelector';
 import { createSupabaseBrowserClient } from '@/lib/supabase/browserClient';
@@ -75,7 +76,8 @@ export default function TherapistDashboardPage() {
           <TherapistProfileForm />
           <TherapistServiceSelector />
         </div>
-        <TherapistAvailability />
+        <RecurringPatterns />
+        <AvailabilityCalendar />
         <div className="space-y-3 rounded-3xl border border-slate-200 bg-white p-6 shadow">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-slate-900">Anfragen & Buchungen</h2>
