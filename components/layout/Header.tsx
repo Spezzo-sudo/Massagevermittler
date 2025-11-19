@@ -2,16 +2,13 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-
 import { createSupabaseBrowserClient } from '@/lib/supabase/browserClient';
 import { siteConfig } from '@/config/site';
 
 const navLinks = [
   { href: '/', label: 'Home' },
-  { href: '/book', label: 'Booking' },
+  { href: '/book', label: 'Buchen' },
   { href: '/shop', label: 'Shop' },
-  { href: '/customer/dashboard', label: 'Kundenbereich' },
-  { href: '/therapist/dashboard', label: 'Mitarbeiter' }
 ];
 
 type UserState = {
@@ -19,7 +16,6 @@ type UserState = {
   role: string | null;
 };
 
-/** Global navigation bar with auth-aware links. */
 export function Header() {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [userState, setUserState] = useState<UserState>({ email: null, role: null });
@@ -29,9 +25,12 @@ export function Header() {
     supabase.auth.getSession().then(async ({ data }) => {
       const token = data.session?.access_token;
       if (!token) return;
+
+      // Wir holen die Rolle direkt vom API Endpoint, da Cookies im Client manchmal laggen
       const profile = await fetch('/api/auth/role', { headers: { Authorization: `Bearer ${token}` } })
         .then((res) => res.json())
         .catch(() => ({ role: null }));
+
       setUserState({
         email: data.session?.user?.email ?? null,
         role: profile?.role ?? null
@@ -45,114 +44,118 @@ export function Header() {
     window.location.href = '/';
   };
 
-  const roleLabel = userState.role ? userState.role : 'Gast';
+  // Übersetzter Rollenname für die Anzeige
+  const roleDisplay = userState.role === 'therapist' ? 'Therapeut:in' :
+                      userState.role === 'admin' ? 'Admin' : 'Kunde';
 
   return (
-    <header className="border-b border-slate-100 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70">
+    <header className="sticky top-0 z-50 border-b border-slate-100 bg-white/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-500 text-sm text-white">IM</span>
-          {siteConfig.name}
+
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-2 font-bold text-slate-900 text-lg tracking-tight">
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-500 text-white shadow-sm shadow-brand-200">
+            IM
+          </span>
+          <span className="hidden sm:inline">{siteConfig.name}</span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-6 text-sm text-slate-600 md:flex">
+        <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
           {navLinks.map((link) => (
-            <Link key={link.href} href={link.href} className="hover:text-slate-900">
+            <Link key={link.href} href={link.href} className="hover:text-brand-600 transition-colors">
               {link.label}
             </Link>
           ))}
+          {/* Dashboard Links basierend auf Rolle einblenden */}
+          {userState.role === 'customer' && (
+            <Link href="/customer/dashboard" className="hover:text-brand-600 transition-colors">Mein Bereich</Link>
+          )}
+          {userState.role === 'therapist' && (
+            <Link href="/therapist/dashboard" className="hover:text-brand-600 transition-colors">Cockpit</Link>
+          )}
         </nav>
 
-        {/* Desktop Auth */}
-        <div className="hidden md:flex">
+        {/* Desktop Auth Buttons */}
+        <div className="hidden md:flex items-center gap-4">
           {userState.email ? (
-            <div className="flex items-center gap-3 text-sm">
-              <span className="rounded-full border border-slate-200 px-3 py-1 text-slate-600">
-                {roleLabel} · {userState.email}
-              </span>
-              <button onClick={handleLogout} className="rounded-full bg-slate-900 px-4 py-2 text-white">
+            <div className="flex items-center gap-3 pl-4 border-l border-slate-200">
+              <div className="text-right hidden lg:block">
+                <p className="text-xs font-semibold text-slate-900">{roleDisplay}</p>
+                <p className="text-[10px] text-slate-500 max-w-[120px] truncate">{userState.email}</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="text-sm font-medium text-slate-500 hover:text-rose-600 transition-colors px-2"
+              >
                 Logout
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-3 text-sm">
-              <Link href="/customer/login" className="text-slate-600 hover:text-slate-900">
-                Login (Kunde)
+            <div className="flex items-center gap-2">
+              {/* Partner Login: Dezent */}
+              <Link
+                href="/therapist/login"
+                className="text-sm font-medium text-slate-500 hover:text-slate-900 px-3 py-2 transition-colors"
+              >
+                Partner Login
               </Link>
-              <Link href="/therapist/login" className="rounded-full bg-brand-500 px-4 py-2 text-white">
-                Login (Mitarbeiter)
+
+              {/* Kunden Login: Auffällig (Call to Action) */}
+              <Link
+                href="/customer/login"
+                className="rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-brand-200 hover:bg-brand-600 hover:shadow-md transition-all transform active:scale-95"
+              >
+                Login / Registrieren
               </Link>
             </div>
           )}
         </div>
 
-        {/* Mobile Hamburger Button */}
+        {/* Mobile Menu Toggle */}
         <button
-          className="md:hidden p-2"
+          className="md:hidden p-2 -mr-2 text-slate-600"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle menu"
         >
-          <svg className="h-6 w-6 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            {mobileMenuOpen ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            )}
+          <span className="sr-only">Menü</span>
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={mobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
           </svg>
         </button>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu Content */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-100 bg-white">
-          <nav className="flex flex-col px-6 py-4 space-y-3">
+        <div className="md:hidden border-t border-slate-100 bg-white p-4 space-y-4 shadow-xl absolute w-full">
+          <nav className="flex flex-col space-y-2">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm text-slate-700 hover:text-brand-600 py-2"
+                className="block px-4 py-2 text-base font-medium text-slate-700 hover:bg-slate-50 rounded-lg"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {link.label}
               </Link>
             ))}
-            <div className="pt-3 border-t border-slate-100 space-y-3">
-              {userState.email ? (
-                <>
-                  <div className="text-xs text-slate-500">
-                    {roleLabel} · {userState.email}
-                  </div>
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="w-full rounded-full bg-slate-900 px-4 py-2 text-sm text-white"
-                  >
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link
-                    href="/customer/login"
-                    className="block w-full rounded-full border border-slate-200 px-4 py-2 text-center text-sm text-slate-700"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Login (Kunde)
-                  </Link>
-                  <Link
-                    href="/therapist/login"
-                    className="block w-full rounded-full bg-brand-500 px-4 py-2 text-center text-sm text-white"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Login (Mitarbeiter)
-                  </Link>
-                </>
-              )}
-            </div>
           </nav>
+
+          <div className="border-t border-slate-100 pt-4">
+            {userState.email ? (
+              <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-rose-600 font-medium">
+                Logout ({userState.email})
+              </button>
+            ) : (
+              <div className="grid gap-3 px-4">
+                <Link href="/customer/login" className="flex justify-center items-center w-full rounded-xl bg-brand-500 py-3 text-white font-semibold">
+                  Kunden Login
+                </Link>
+                <Link href="/therapist/login" className="flex justify-center items-center w-full rounded-xl border border-slate-200 py-3 text-slate-600 font-medium">
+                  Partner Login
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </header>
