@@ -16,12 +16,8 @@ export function ProfileBootstrapper() {
       if (!token) {
         return;
       }
-      await fetch('/api/auth/ensure-profile', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      // fetch role to persist it in cookie for middleware gating
+      // Only fetch role and set cookie - do NOT create profile here
+      // Profile creation should only happen during registration via AuthCard
       await fetch('/api/auth/role', { headers: { Authorization: `Bearer ${token}` } });
       setDone(true);
     });

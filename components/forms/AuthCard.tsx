@@ -34,7 +34,21 @@ export function AuthCard({ mode, targetRole, redirectTo }: AuthCardProps) {
         setMessage('Erfolgreich angemeldet.');
       }
     } catch (error) {
-      setMessage((error as Error).message);
+      const errorMessage = (error as Error).message;
+      // Improve error messages for common cases
+      if (errorMessage.includes('User already registered')) {
+        setMessage(
+          mode === 'sign-up'
+            ? 'Diese E-Mail ist bereits registriert. Bitte logge dich ein oder verwende eine andere E-Mail.'
+            : 'Falsche Anmeldedaten.'
+        );
+      } else if (errorMessage.includes('Invalid login credentials')) {
+        setMessage('E-Mail oder Passwort falsch. Bitte überprüfe deine Eingaben.');
+      } else if (errorMessage.includes('Email not confirmed')) {
+        setMessage('Bitte bestätige zuerst deine E-Mail-Adresse.');
+      } else {
+        setMessage(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
