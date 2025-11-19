@@ -44,23 +44,30 @@ ALTER TABLE therapist_profiles ENABLE ROW LEVEL SECURITY;
 -- SELECT: Therapists can view their own profile
 CREATE POLICY "Therapists can view their own profile"
 ON therapist_profiles FOR SELECT
-USING (auth.uid() = user_id);
+USING (auth.uid() = therapist_id);
 
--- SELECT: Approved therapists are publicly searchable
+-- SELECT: Approved therapists are publicly searchable (check profile table for approval)
 CREATE POLICY "Approved therapists are public"
 ON therapist_profiles FOR SELECT
-USING (onboarding_status = 'approved');
+USING (
+  is_active = true
+  AND EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = therapist_profiles.therapist_id
+    AND profiles.onboarding_status = 'approved'
+  )
+);
 
 -- UPDATE: Therapists can only update their own profile
 CREATE POLICY "Therapists can update their own profile"
 ON therapist_profiles FOR UPDATE
-USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
+USING (auth.uid() = therapist_id)
+WITH CHECK (auth.uid() = therapist_id);
 
 -- INSERT: Therapists can create their own profile
 CREATE POLICY "Therapists can insert their own profile"
 ON therapist_profiles FOR INSERT
-WITH CHECK (auth.uid() = user_id);
+WITH CHECK (auth.uid() = therapist_id);
 
 -- ============================================================================
 -- BOOKINGS TABLE - Users can only access their own bookings
@@ -76,7 +83,7 @@ USING (auth.uid() = customer_id);
 -- SELECT: Therapists can view their assigned bookings
 CREATE POLICY "Therapists can view their bookings"
 ON bookings FOR SELECT
-USING (therapist_id = (SELECT id FROM therapist_profiles WHERE user_id = auth.uid()));
+USING (auth.uid() = therapist_id);
 
 -- UPDATE: Customers can update their own bookings (cancel, add notes)
 CREATE POLICY "Customers can update their own bookings"
@@ -87,8 +94,8 @@ WITH CHECK (auth.uid() = customer_id);
 -- UPDATE: Therapists can update booking status
 CREATE POLICY "Therapists can update booking status"
 ON bookings FOR UPDATE
-USING (therapist_id = (SELECT id FROM therapist_profiles WHERE user_id = auth.uid()))
-WITH CHECK (therapist_id = (SELECT id FROM therapist_profiles WHERE user_id = auth.uid()));
+USING (auth.uid() = therapist_id)
+WITH CHECK (auth.uid() = therapist_id);
 
 -- INSERT: Only server can insert bookings (no direct client insert)
 -- Handled via API endpoint with server-side validation
@@ -102,28 +109,28 @@ ALTER TABLE availability_slots ENABLE ROW LEVEL SECURITY;
 -- SELECT: Therapists can view their own slots
 CREATE POLICY "Therapists can view their own availability slots"
 ON availability_slots FOR SELECT
-USING (therapist_id = (SELECT id FROM therapist_profiles WHERE user_id = auth.uid()));
+USING (auth.uid() = therapist_id);
 
--- SELECT: Public can view available slots for matching
+-- SELECT: Public can view unbooked slots for matching
 CREATE POLICY "Public can view available slots"
 ON availability_slots FOR SELECT
-USING (is_available = true);
+USING (is_booked = false);
 
 -- INSERT: Therapists can create their own slots
 CREATE POLICY "Therapists can create their own slots"
 ON availability_slots FOR INSERT
-WITH CHECK (therapist_id = (SELECT id FROM therapist_profiles WHERE user_id = auth.uid()));
+WITH CHECK (auth.uid() = therapist_id);
 
 -- UPDATE: Therapists can update their own slots
 CREATE POLICY "Therapists can update their own slots"
 ON availability_slots FOR UPDATE
-USING (therapist_id = (SELECT id FROM therapist_profiles WHERE user_id = auth.uid()))
-WITH CHECK (therapist_id = (SELECT id FROM therapist_profiles WHERE user_id = auth.uid()));
+USING (auth.uid() = therapist_id)
+WITH CHECK (auth.uid() = therapist_id);
 
 -- DELETE: Therapists can delete their own slots
 CREATE POLICY "Therapists can delete their own slots"
 ON availability_slots FOR DELETE
-USING (therapist_id = (SELECT id FROM therapist_profiles WHERE user_id = auth.uid()));
+USING (auth.uid() = therapist_id);
 
 -- ============================================================================
 -- REVIEWS TABLE - Users can view and create reviews
@@ -131,10 +138,10 @@ USING (therapist_id = (SELECT id FROM therapist_profiles WHERE user_id = auth.ui
 
 ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
 
--- SELECT: Everyone can view approved reviews
-CREATE POLICY "Everyone can view approved reviews"
+-- SELECT: Everyone can view all reviews (or add is_approved field if needed)
+CREATE POLICY "Everyone can view reviews"
 ON reviews FOR SELECT
-USING (is_approved = true OR auth.uid() = customer_id);
+USING (true);
 
 -- INSERT: Customers can create reviews for their bookings
 CREATE POLICY "Customers can create reviews for their bookings"
@@ -214,7 +221,12 @@ USING (true);
 -- INSERT/UPDATE: Only therapists can manage their own services
 CREATE POLICY "Therapists can manage their own services"
 ON therapist_services FOR INSERT
-WITH CHECK (therapist_id = (SELECT id FROM therapist_profiles WHERE user_id = auth.uid()));
+WITH CHECK (auth.uid() = therapist_id);
+
+CREATE POLICY "Therapists can update their own services"
+ON therapist_services FOR UPDATE
+USING (auth.uid() = therapist_id)
+WITH CHECK (auth.uid() = therapist_id);
 
 -- ============================================================================
 -- ADMIN OPERATIONS
