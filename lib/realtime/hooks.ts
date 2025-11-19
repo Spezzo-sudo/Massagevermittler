@@ -17,7 +17,7 @@ import {
 /**
  * Hook to listen for booking updates (customer view)
  */
-export function useCustomerBookings<T extends any = any>(customerId: string) {
+export function useCustomerBookings<T extends Record<string, any> & { id: string } = any>(customerId: string) {
   const [bookings, setBookings] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -26,15 +26,15 @@ export function useCustomerBookings<T extends any = any>(customerId: string) {
     setLoading(true);
     setError(null);
 
-    const subscription = subscribeToCustomerBookings(customerId, (payload: RealtimePostgresChangesPayload<T>) => {
+    const subscription = subscribeToCustomerBookings(customerId, (payload: RealtimePostgresChangesPayload<Record<string, any>>) => {
       console.info('[Realtime] Booking update received', { eventType: payload.eventType });
 
       if (payload.eventType === 'INSERT') {
-        setBookings((prev) => [payload.new, ...prev]);
+        setBookings((prev) => [payload.new as T, ...prev]);
       } else if (payload.eventType === 'UPDATE') {
-        setBookings((prev) => prev.map((b) => (b.id === payload.new.id ? payload.new : b)));
+        setBookings((prev) => prev.map((b) => (b.id === (payload.new as T).id ? payload.new as T : b)));
       } else if (payload.eventType === 'DELETE') {
-        setBookings((prev) => prev.filter((b) => b.id !== payload.old.id));
+        setBookings((prev) => prev.filter((b) => b.id !== (payload.old as T).id));
       }
     });
 
@@ -49,20 +49,20 @@ export function useCustomerBookings<T extends any = any>(customerId: string) {
 /**
  * Hook to listen for new booking requests (therapist view)
  */
-export function useTherapistBookingRequests<T extends any = any>(therapistId: string) {
+export function useTherapistBookingRequests<T extends Record<string, any> & { id: string } = any>(therapistId: string) {
   const [requests, setRequests] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
 
-    const subscription = subscribeToTherapistBookings(therapistId, (payload: RealtimePostgresChangesPayload<T>) => {
+    const subscription = subscribeToTherapistBookings(therapistId, (payload: RealtimePostgresChangesPayload<Record<string, any>>) => {
       console.info('[Realtime] New booking request received');
 
       if (payload.eventType === 'INSERT') {
-        setRequests((prev) => [payload.new, ...prev]);
+        setRequests((prev) => [payload.new as T, ...prev]);
       } else if (payload.eventType === 'UPDATE') {
-        setRequests((prev) => prev.map((r) => (r.id === payload.new.id ? payload.new : r)));
+        setRequests((prev) => prev.map((r) => (r.id === (payload.new as T).id ? payload.new as T : r)));
       }
     });
 
@@ -77,22 +77,22 @@ export function useTherapistBookingRequests<T extends any = any>(therapistId: st
 /**
  * Hook for availability slot updates
  */
-export function useAvailabilitySlots<T extends any = any>(therapistId: string) {
+export function useAvailabilitySlots<T extends Record<string, any> & { id: string } = any>(therapistId: string) {
   const [slots, setSlots] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
 
-    const subscription = subscribeToAvailabilitySlots(therapistId, (payload: RealtimePostgresChangesPayload<T>) => {
+    const subscription = subscribeToAvailabilitySlots(therapistId, (payload: RealtimePostgresChangesPayload<Record<string, any>>) => {
       console.info('[Realtime] Availability slot update received', { eventType: payload.eventType });
 
       if (payload.eventType === 'INSERT') {
-        setSlots((prev) => [...prev, payload.new]);
+        setSlots((prev) => [...prev, payload.new as T]);
       } else if (payload.eventType === 'UPDATE') {
-        setSlots((prev) => prev.map((s) => (s.id === payload.new.id ? payload.new : s)));
+        setSlots((prev) => prev.map((s) => (s.id === (payload.new as T).id ? payload.new as T : s)));
       } else if (payload.eventType === 'DELETE') {
-        setSlots((prev) => prev.filter((s) => s.id !== payload.old.id));
+        setSlots((prev) => prev.filter((s) => s.id !== (payload.old as T).id));
       }
     });
 
@@ -107,7 +107,7 @@ export function useAvailabilitySlots<T extends any = any>(therapistId: string) {
 /**
  * Hook for admin: listen to all booking changes
  */
-export function useAdminBookingMonitor<T extends any = any>() {
+export function useAdminBookingMonitor<T extends Record<string, any> & { id: string } = any>() {
   const [bookings, setBookings] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [latestChange, setLatestChange] = useState<T | null>(null);
@@ -115,15 +115,15 @@ export function useAdminBookingMonitor<T extends any = any>() {
   useEffect(() => {
     setLoading(true);
 
-    const subscription = subscribeToAllBookings((payload: RealtimePostgresChangesPayload<T>) => {
+    const subscription = subscribeToAllBookings((payload: RealtimePostgresChangesPayload<Record<string, any>>) => {
       console.info('[Realtime] Admin: Booking change received', { eventType: payload.eventType });
 
-      setLatestChange(payload.eventType === 'DELETE' ? payload.old : payload.new);
+      setLatestChange(payload.eventType === 'DELETE' ? payload.old as T : payload.new as T);
 
       if (payload.eventType === 'INSERT') {
-        setBookings((prev) => [payload.new, ...prev]);
+        setBookings((prev) => [payload.new as T, ...prev]);
       } else if (payload.eventType === 'UPDATE') {
-        setBookings((prev) => prev.map((b) => (b.id === payload.new.id ? payload.new : b)));
+        setBookings((prev) => prev.map((b) => (b.id === (payload.new as T).id ? payload.new as T : b)));
       }
     });
 
@@ -138,7 +138,7 @@ export function useAdminBookingMonitor<T extends any = any>() {
 /**
  * Hook for admin: listen to therapist applications
  */
-export function useTherapistApplications<T extends any = any>() {
+export function useTherapistApplications<T extends Record<string, any> = any>() {
   const [applications, setApplications] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [newCount, setNewCount] = useState(0);
@@ -146,11 +146,11 @@ export function useTherapistApplications<T extends any = any>() {
   useEffect(() => {
     setLoading(true);
 
-    const subscription = subscribeToTherapistApplications((payload: RealtimePostgresChangesPayload<T>) => {
+    const subscription = subscribeToTherapistApplications((payload: RealtimePostgresChangesPayload<Record<string, any>>) => {
       console.info('[Realtime] New therapist application received');
 
       if (payload.eventType === 'INSERT') {
-        setApplications((prev) => [payload.new, ...prev]);
+        setApplications((prev) => [payload.new as T, ...prev]);
         setNewCount((prev) => prev + 1);
       }
     });

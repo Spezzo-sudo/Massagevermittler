@@ -14,7 +14,7 @@ export function getStripeClient() {
   return stripeClient;
 }
 
-type CheckoutPayload = {
+export type CheckoutPayload = {
   amount: number;
   currency?: string;
   successUrl: string;

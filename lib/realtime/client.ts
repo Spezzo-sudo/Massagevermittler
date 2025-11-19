@@ -5,7 +5,7 @@
 import { createSupabaseBrowserClient } from '@/lib/supabase/browserClient';
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
-type ChangeHandler<T> = (payload: RealtimePostgresChangesPayload<T>) => void;
+type ChangeHandler<T extends Record<string, any> = Record<string, any>> = (payload: RealtimePostgresChangesPayload<T>) => void;
 
 interface RealtimeSubscription {
   channel: RealtimeChannel;
@@ -15,7 +15,7 @@ interface RealtimeSubscription {
 /**
  * Subscribe to booking updates for a customer
  */
-export function subscribeToCustomerBookings(customerId: string, onUpdate: ChangeHandler<any>) {
+export function subscribeToCustomerBookings(customerId: string, onUpdate: ChangeHandler<Record<string, any>>) {
   const supabase = createSupabaseBrowserClient();
 
   const channel = supabase
@@ -43,7 +43,7 @@ export function subscribeToCustomerBookings(customerId: string, onUpdate: Change
 /**
  * Subscribe to therapist's booking requests
  */
-export function subscribeToTherapistBookings(therapistId: string, onUpdate: ChangeHandler<any>) {
+export function subscribeToTherapistBookings(therapistId: string, onUpdate: ChangeHandler<Record<string, any>>) {
   const supabase = createSupabaseBrowserClient();
 
   const channel = supabase
@@ -71,7 +71,7 @@ export function subscribeToTherapistBookings(therapistId: string, onUpdate: Chan
 /**
  * Subscribe to all bookings for admin
  */
-export function subscribeToAllBookings(onUpdate: ChangeHandler<any>) {
+export function subscribeToAllBookings(onUpdate: ChangeHandler<Record<string, any>>) {
   const supabase = createSupabaseBrowserClient();
 
   const channel = supabase
@@ -98,7 +98,7 @@ export function subscribeToAllBookings(onUpdate: ChangeHandler<any>) {
 /**
  * Subscribe to availability slots for a therapist
  */
-export function subscribeToAvailabilitySlots(therapistId: string, onUpdate: ChangeHandler<any>) {
+export function subscribeToAvailabilitySlots(therapistId: string, onUpdate: ChangeHandler<Record<string, any>>) {
   const supabase = createSupabaseBrowserClient();
 
   const channel = supabase
@@ -126,7 +126,7 @@ export function subscribeToAvailabilitySlots(therapistId: string, onUpdate: Chan
 /**
  * Subscribe to therapist application notifications (for admin)
  */
-export function subscribeToTherapistApplications(onUpdate: ChangeHandler<any>) {
+export function subscribeToTherapistApplications(onUpdate: ChangeHandler<Record<string, any>>) {
   const supabase = createSupabaseBrowserClient();
 
   const channel = supabase
