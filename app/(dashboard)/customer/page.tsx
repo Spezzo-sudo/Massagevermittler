@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { RoleGate } from '@/components/auth/RoleGate';
 import { createSupabaseBrowserClient } from '@/lib/supabase/browserClient';
+import { massageServices } from '@/features/booking/constants';
 
 type Booking = {
   id: string;
@@ -15,6 +16,10 @@ type Booking = {
   price: number;
   notes: string | null;
 };
+
+const serviceMap = Object.fromEntries(
+  massageServices.map(s => [s.id, s])
+);
 
 export default function CustomerDashboardPage() {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
@@ -34,6 +39,10 @@ export default function CustomerDashboardPage() {
   }, [supabase]);
 
   const cancelBooking = async (id: string) => {
+    if (!confirm('Möchten Sie diese Buchung wirklich stornieren?')) {
+      return;
+    }
+
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
     if (!token) return;
@@ -47,7 +56,7 @@ export default function CustomerDashboardPage() {
       return;
     }
     setBookings((prev) => prev.filter((b) => b.id !== id));
-    setMessage('Buchung storniert.');
+    setMessage('Buchung erfolgreich storniert.');
   };
 
   return (
@@ -64,32 +73,40 @@ export default function CustomerDashboardPage() {
             {bookings.length === 0 ? (
               <p className="text-sm text-slate-500">Keine Buchungen. Starte eine unter /book.</p>
             ) : (
-              bookings.map((booking) => (
-                <div key={booking.id} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">
-                        Service #{booking.service_id} · {new Date(booking.start_time).toLocaleString()}
-                      </p>
-                      <p className="text-xs text-slate-500">Status: {booking.status}</p>
-                    </div>
-                    <div className="flex gap-2 text-sm">
-                      {booking.status === 'pending' || booking.status === 'confirmed' ? (
-                        <button
-                          className="rounded-full border border-rose-200 px-3 py-1 text-rose-600"
-                          onClick={() => cancelBooking(booking.id)}
-                        >
-                          Stornieren
-                        </button>
-                      ) : null}
+              bookings.map((booking) => {
+                const service = serviceMap[booking.service_id];
+                return (
+                  <div key={booking.id} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">
+                          {service?.name ?? `Service #${booking.service_id}`} · {new Date(booking.start_time).toLocaleString('de-DE')}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Dauer: {service?.durationMinutes ?? '–'} Min · Preis: {booking.price} THB · Status: {booking.status}
+                        </p>
+                        {booking.payment_status && (
+                          <p className="text-xs text-slate-500">Zahlung: {booking.payment_status}</p>
+                        )}
+                      </div>
+                      <div className="flex gap-2 text-sm">
+                        {booking.status === 'pending' || booking.status === 'confirmed' ? (
+                          <button
+                            className="rounded-full border border-rose-200 px-3 py-1 text-rose-600 hover:bg-rose-50 transition-colors"
+                            onClick={() => cancelBooking(booking.id)}
+                          >
+                            Stornieren
+                          </button>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         )}
-        {message ? <p className="text-sm text-slate-600">{message}</p> : null}
+        {message ? <p className="text-sm text-brand-600">{message}</p> : null}
       </div>
     </RoleGate>
   );

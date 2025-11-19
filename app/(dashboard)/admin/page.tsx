@@ -64,7 +64,7 @@ export default function AdminDashboardPage() {
                 </div>
                 <div className="flex gap-2 text-sm">
                   {t.onboarding_status !== 'approved' ? (
-                    <button className="rounded-full border border-emerald-200 px-3 py-1 text-emerald-600" onClick={() => approve(t.id)}>
+                    <button className="rounded-full border border-brand-200 px-3 py-1 text-brand-600" onClick={() => approve(t.id)}>
                       Freischalten
                     </button>
                   ) : (

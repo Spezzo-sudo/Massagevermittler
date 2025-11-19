@@ -97,7 +97,7 @@ export function MapPicker({ location, onChange }: MapPickerProps) {
   return (
     <div className="space-y-2">
       <div ref={mapRef} className="h-80 w-full overflow-hidden rounded-2xl border border-slate-200" />
-      {error ? <p className="text-xs text-rose-500">{error}</p> : <p className="text-xs text-emerald-600">Pin muss auf Ko Phangan liegen.</p>}
+      {error ? <p className="text-xs text-rose-500">{error}</p> : <p className="text-xs text-brand-600">Pin muss auf Ko Phangan liegen.</p>}
     </div>
   );
 }

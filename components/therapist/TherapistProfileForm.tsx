@@ -122,7 +122,7 @@ export function TherapistProfileForm({
           <input className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm" value={payoutDetails} onChange={(event) => setPayoutDetails(event.target.value)} placeholder="z.B. PromptPay +6691..." />
         </label>
       </div>
-      <button type="submit" className="w-full rounded-full bg-emerald-500 py-3 text-sm font-semibold text-white shadow disabled:opacity-60" disabled={isPending}>
+      <button type="submit" className="w-full rounded-full bg-brand-500 py-3 text-sm font-semibold text-white shadow disabled:opacity-60" disabled={isPending}>
         {isPending ? 'Speichere...' : 'Profil speichern'}
       </button>
       {status ? <p className="text-sm text-slate-500">{status}</p> : null}

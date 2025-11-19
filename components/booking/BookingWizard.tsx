@@ -118,13 +118,13 @@ export function BookingWizard() {
           <button
             type="button"
             onClick={requestCurrentLocation}
-            className="rounded-full border border-emerald-200 bg-white px-4 py-2 text-xs font-semibold text-emerald-600 shadow"
+            className="rounded-full border border-brand-200 bg-white px-4 py-2 text-xs font-semibold text-brand-600 shadow"
           >
             Standort automatisch erkennen
           </button>
         </div>
         <AddressAutocomplete onAddressSelect={handlePlaceSelect} placeholder="Hotel / Villa / Bungalow suchen" />
-        {geoStatus ? <p className="text-xs text-emerald-600">{geoStatus}</p> : null}
+        {geoStatus ? <p className="text-xs text-brand-600">{geoStatus}</p> : null}
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Hotel / Unterkunft">
             <input
@@ -196,14 +196,14 @@ export function BookingWizard() {
         <p className="font-semibold text-slate-900">Preis Vorschau</p>
         <p>
           {selectedService?.name} ({selectedService?.durationMinutes} min):{' '}
-          <span className="font-semibold text-emerald-600">{selectedService?.price} THB</span>
+          <span className="font-semibold text-brand-600">{selectedService?.price} THB</span>
         </p>
         <p>Preise basieren auf Supabase `services.base_price` – Zuschläge werden automatisch addiert.</p>
       </div>
 
       <button
         type="submit"
-        className="w-full rounded-full bg-emerald-500 py-3 font-semibold text-white shadow-lg disabled:opacity-60"
+        className="w-full rounded-full bg-brand-500 py-3 font-semibold text-white shadow-lg disabled:opacity-60"
         disabled={isPending || !(effectiveLocation?.latitude && effectiveLocation?.longitude)}
       >
         {isPending ? 'Buchung wird erstellt...' : 'Massage buchen'}

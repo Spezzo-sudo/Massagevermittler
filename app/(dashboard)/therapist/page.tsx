@@ -7,6 +7,7 @@ import { TherapistAvailability } from '@/components/therapist/TherapistAvailabil
 import { TherapistProfileForm } from '@/components/therapist/TherapistProfileForm';
 import { TherapistServiceSelector } from '@/components/therapist/TherapistServiceSelector';
 import { createSupabaseBrowserClient } from '@/lib/supabase/browserClient';
+import { massageServices } from '@/features/booking/constants';
 
 type Booking = {
   id: string;
@@ -16,6 +17,10 @@ type Booking = {
   service_id: number;
   notes: string | null;
 };
+
+const serviceMap = Object.fromEntries(
+  massageServices.map(s => [s.id, s])
+);
 
 /** Therapist portal overview with onboarding modules and request list. */
 export default function TherapistDashboardPage() {
@@ -33,7 +38,15 @@ export default function TherapistDashboardPage() {
     });
   }, [supabase]);
 
-  const updateStatus = async (id: string, status: string) => {
+  const updateStatus = async (id: string, status: string, actionName: string) => {
+    const confirmMessage = status === 'rejected'
+      ? 'Möchten Sie diese Buchung wirklich ablehnen?'
+      : `Möchten Sie diese Buchung wirklich ${actionName}?`;
+
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
     if (!token) return;
@@ -48,6 +61,7 @@ export default function TherapistDashboardPage() {
       return;
     }
     setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, status } : b)));
+    setMessage(`Buchung erfolgreich ${actionName}.`);
   };
 
   return (
@@ -70,32 +84,46 @@ export default function TherapistDashboardPage() {
           {bookings.length === 0 ? (
             <p className="text-sm text-slate-500">Keine Anfragen.</p>
           ) : (
-            bookings.map((booking) => (
-              <div key={booking.id} className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">
-                    Service #{booking.service_id} · {new Date(booking.start_time).toLocaleString()}
-                  </p>
-                  <p className="text-xs text-slate-500">Status: {booking.status}</p>
+            bookings.map((booking) => {
+              const service = serviceMap[booking.service_id];
+              return (
+                <div key={booking.id} className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">
+                      {service?.name ?? `Service #${booking.service_id}`} · {new Date(booking.start_time).toLocaleString('de-DE')}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      Dauer: {service?.durationMinutes ?? '–'} Min · Preis: {booking.price} THB · Status: {booking.status}
+                    </p>
+                    {booking.notes && (
+                      <p className="text-xs text-slate-500 mt-1">Hinweise: {booking.notes}</p>
+                    )}
+                  </div>
+                  <div className="flex gap-2 text-sm">
+                    {booking.status === 'pending' ? (
+                      <>
+                        <button
+                          className="rounded-full border border-brand-200 px-3 py-1 text-brand-600 hover:bg-brand-50 transition-colors"
+                          onClick={() => updateStatus(booking.id, 'accepted', 'angenommen')}
+                        >
+                          Annehmen
+                        </button>
+                        <button
+                          className="rounded-full border border-rose-200 px-3 py-1 text-rose-600 hover:bg-rose-50 transition-colors"
+                          onClick={() => updateStatus(booking.id, 'rejected', 'abgelehnt')}
+                        >
+                          Ablehnen
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-xs text-slate-500">Keine Aktionen</span>
+                    )}
+                  </div>
                 </div>
-                <div className="flex gap-2 text-sm">
-                  {booking.status === 'pending' ? (
-                    <>
-                      <button className="rounded-full border border-emerald-200 px-3 py-1 text-emerald-600" onClick={() => updateStatus(booking.id, 'accepted')}>
-                        Annehmen
-                      </button>
-                      <button className="rounded-full border border-rose-200 px-3 py-1 text-rose-600" onClick={() => updateStatus(booking.id, 'rejected')}>
-                        Ablehnen
-                      </button>
-                    </>
-                  ) : (
-                    <span className="text-xs text-slate-500">Keine Aktionen</span>
-                  )}
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
-          {message ? <p className="text-sm text-slate-500">{message}</p> : null}
+          {message ? <p className="text-sm text-brand-600">{message}</p> : null}
         </div>
       </div>
     </RoleGate>
